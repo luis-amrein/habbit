@@ -62,7 +62,7 @@ struct WelcomeView: View {
                                 .padding(.horizontal, 24)
                                 .background(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color(.systemGray6).opacity(0.8))
+                                        .fill(Color.backgroundCream)
                                 )
                                 .frame(maxWidth: 280)
                                 .tint(.clear) // Hide TextField's native cursor completely
