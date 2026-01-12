@@ -14,6 +14,7 @@ struct WelcomeView: View {
     @State private var displayedText = ""
     @State private var currentIndex = 0
     @State private var showCursor = false
+    @State private var cursorOpacity: Double = 1.0
     @State private var isTypingComplete = false
     @State private var enteredName = ""
     @State private var textFieldVisible = false
@@ -46,14 +47,13 @@ struct WelcomeView: View {
                     }
                     .frame(width: 320, alignment: .leading)
 
-                    // Blinking cursor for typewriter text (only during typing, before text field appears)
-                    if !textFieldVisible && isTypingComplete {
+                    // Blinking cursor for typewriter text (shows after typing completes)
+                    if isTypingComplete && showCursor {
                         Rectangle()
                             .fill(Color.successGreen)
                             .frame(width: 2, height: 30)
                             .offset(x: calculateCursorOffset())
-                            .opacity(showCursor ? 1 : 0)
-                            .animation(.easeInOut(duration: 0.8).repeatForever(), value: showCursor)
+                            .opacity(cursorOpacity)
                     }
                 }
                 .frame(height: 100)
@@ -106,12 +106,15 @@ struct WelcomeView: View {
         }
         .onChange(of: isTypingComplete) { _, newValue in
             if newValue {
-                // Show blinking cursor briefly, then show text field
+                // Start blinking cursor immediately
                 showCursor = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    showCursor = false // Hide typewriter cursor
+                startCursorBlink()
+                // Show text field after cursor has blinked for a while
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     textFieldVisible = true
                     isTextFieldFocused = true
+                    // Hide cursor when text field appears
+                    showCursor = false
                 }
             }
         }
@@ -142,6 +145,19 @@ struct WelcomeView: View {
         }
     }
 
+    private func startCursorBlink() {
+        cursorOpacity = 1.0
+        Timer.scheduledTimer(withTimeInterval: 0.8, repeats: true) { timer in
+            guard self.showCursor else {
+                timer.invalidate()
+                return
+            }
+            withAnimation(.easeInOut(duration: 0.4)) {
+                self.cursorOpacity = self.cursorOpacity == 1.0 ? 0.0 : 1.0
+            }
+        }
+    }
+    
     private func calculateCursorOffset() -> CGFloat {
         let font = UIFont(name: "PTSans-Regular", size: 24) ?? UIFont.systemFont(ofSize: 24)
         let textWidth = (displayedText as NSString).size(withAttributes: [.font: font]).width
