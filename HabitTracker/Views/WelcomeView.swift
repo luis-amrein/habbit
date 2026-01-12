@@ -19,7 +19,7 @@ struct WelcomeView: View {
     @State private var textFieldVisible = false
     @FocusState private var isTextFieldFocused: Bool
 
-    private let fullText = "Hello handsome, welcome to Habbit. How would you like to be called?"
+    private let fullText = "Hello handsome,\nwelcome to Habbit.\nHow would you like to be called?"
 
     var body: some View {
         ZStack {
@@ -43,8 +43,8 @@ struct WelcomeView: View {
                     }
                     .frame(width: 320, alignment: .leading)
 
-                    // Blinking cursor (only after text field is visible and cursor should show)
-                    if textFieldVisible && showCursor {
+                    // Blinking cursor (only after text field is visible, focused, and cursor should show)
+                    if textFieldVisible && isTextFieldFocused && showCursor {
                         Rectangle()
                             .fill(Color.primaryText)
                             .frame(width: 2, height: 30)
@@ -69,6 +69,7 @@ struct WelcomeView: View {
                                     .fill(Color(.systemGray6).opacity(0.8))
                             )
                             .frame(maxWidth: 280)
+                            .tint(showCursor ? Color.primaryText : Color.clear) // Hide cursor until ready
 
                         Button {
                             if !enteredName.trimmingCharacters(in: .whitespaces).isEmpty {
