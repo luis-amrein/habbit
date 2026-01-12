@@ -19,7 +19,10 @@ struct WelcomeView: View {
     @State private var textFieldVisible = false
     @FocusState private var isTextFieldFocused: Bool
 
-    private let fullText = "Hello handsome,\nwelcome to Habbit.\nHow would you like to be called?"
+    private let fullText = "Hello handsome, welcome to Habbit. How would you like to be called?"
+    
+    // Pause points: after "Hello handsome," and after "welcome to Habbit."
+    private let pausePoints: [Int] = [15, 34] // Indices where pauses should occur (after comma and period)
 
     var body: some View {
         ZStack {
@@ -43,10 +46,10 @@ struct WelcomeView: View {
                     }
                     .frame(width: 320, alignment: .leading)
 
-                    // Blinking cursor (only after text field is visible, focused, and cursor should show)
-                    if textFieldVisible && isTextFieldFocused && showCursor {
+                    // Blinking cursor for typewriter text (only during typing, before text field appears)
+                    if !textFieldVisible && isTypingComplete {
                         Rectangle()
-                            .fill(Color.primaryText)
+                            .fill(Color.successGreen)
                             .frame(width: 2, height: 30)
                             .offset(x: calculateCursorOffset())
                             .opacity(showCursor ? 1 : 0)
@@ -69,7 +72,7 @@ struct WelcomeView: View {
                                     .fill(Color(.systemGray6).opacity(0.8))
                             )
                             .frame(maxWidth: 280)
-                            .tint(showCursor ? Color.primaryText : Color.clear) // Hide cursor until ready
+                            .tint(.clear) // Hide TextField's native cursor completely
 
                         Button {
                             if !enteredName.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -103,11 +106,12 @@ struct WelcomeView: View {
         }
         .onChange(of: isTypingComplete) { _, newValue in
             if newValue {
-                // Show text field, focus it, and start cursor blinking
-                textFieldVisible = true
-                isTextFieldFocused = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    showCursor = true
+                // Show blinking cursor briefly, then show text field
+                showCursor = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showCursor = false // Hide typewriter cursor
+                    textFieldVisible = true
+                    isTextFieldFocused = true
                 }
             }
         }
@@ -116,16 +120,25 @@ struct WelcomeView: View {
     private func startTypewriterEffect() {
         displayedText = ""
         currentIndex = 0
-
-        Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { timer in
-            if currentIndex < fullText.count {
-                let index = fullText.index(fullText.startIndex, offsetBy: currentIndex)
-                displayedText.append(fullText[index])
-                currentIndex += 1
-            } else {
-                timer.invalidate()
-                isTypingComplete = true
-            }
+        
+        typeNextCharacter()
+    }
+    
+    private func typeNextCharacter() {
+        guard currentIndex < fullText.count else {
+            isTypingComplete = true
+            return
+        }
+        
+        let index = fullText.index(fullText.startIndex, offsetBy: currentIndex)
+        displayedText.append(fullText[index])
+        currentIndex += 1
+        
+        // Check if we just typed a character at a pause point (pause AFTER typing it)
+        let delay: TimeInterval = pausePoints.contains(currentIndex - 1) ? 0.6 : 0.08
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            typeNextCharacter()
         }
     }
 
