@@ -312,7 +312,7 @@ struct HomeView: View {
         
         // Give user some initial streak freezes for demo
         if streakFreezeCount == 0 {
-            streakFreezeCount = 2
+            streakFreezeCount = 5
         }
         
         let sampleHabits = Habit.sampleHabits

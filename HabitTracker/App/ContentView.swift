@@ -20,13 +20,17 @@ enum Tab: String, CaseIterable {
 struct ContentView: View {
     @State private var selectedTab: Tab = .habits
     @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
+    @AppStorage("hasCompletedWelcome") private var hasCompletedWelcome = false
 
     private var colorScheme: ColorScheme? {
         AppearanceMode(rawValue: appearanceMode)?.colorScheme
     }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        if !hasCompletedWelcome {
+            WelcomeView()
+        } else {
+            TabView(selection: $selectedTab) {
             HomeView()
                 .tabItem {
                     Label("Habits", systemImage: "circle.circle.fill")
@@ -49,6 +53,7 @@ struct ContentView: View {
         }
         .tint(.successGreen)
         .preferredColorScheme(colorScheme)
+        }
     }
 }
 
