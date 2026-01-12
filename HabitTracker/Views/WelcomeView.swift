@@ -47,32 +47,34 @@ struct WelcomeView: View {
                     }
                     .frame(width: 320, alignment: .leading)
 
-                    // Blinking cursor for typewriter text (shows after typing completes)
-                    if isTypingComplete && showCursor {
-                        Rectangle()
-                            .fill(Color.successGreen)
-                            .frame(width: 2, height: 30)
-                            .offset(x: calculateCursorOffset())
-                            .opacity(cursorOpacity)
-                    }
                 }
                 .frame(height: 100)
 
                 // Name input field (appears after typing completes)
                 if textFieldVisible {
                     VStack(spacing: 16) {
-                        TextField("", text: $enteredName)
-                            .font(.custom("PTSans-Regular", size: 20))
-                            .multilineTextAlignment(.center)
-                            .focused($isTextFieldFocused)
-                            .padding(.vertical, 16)
-                            .padding(.horizontal, 24)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(.systemGray6).opacity(0.8))
-                            )
-                            .frame(maxWidth: 280)
-                            .tint(.clear) // Hide TextField's native cursor completely
+                        ZStack {
+                            TextField("", text: $enteredName)
+                                .font(.custom("PTSans-Regular", size: 20))
+                                .multilineTextAlignment(.center)
+                                .focused($isTextFieldFocused)
+                                .padding(.vertical, 16)
+                                .padding(.horizontal, 24)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(.systemGray6).opacity(0.8))
+                                )
+                                .frame(maxWidth: 280)
+                                .tint(.clear) // Hide TextField's native cursor completely
+                            
+                            // Green blinking cursor in text field
+                            if enteredName.isEmpty && showCursor {
+                                Rectangle()
+                                    .fill(Color.successGreen)
+                                    .frame(width: 2, height: 24)
+                                    .opacity(cursorOpacity)
+                            }
+                        }
 
                         Button {
                             if !enteredName.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -106,16 +108,20 @@ struct WelcomeView: View {
         }
         .onChange(of: isTypingComplete) { _, newValue in
             if newValue {
-                // Start blinking cursor immediately
+                // Show text field immediately after typing completes
+                textFieldVisible = true
+                isTextFieldFocused = true
                 showCursor = true
                 startCursorBlink()
-                // Show text field after cursor has blinked for a while
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    textFieldVisible = true
-                    isTextFieldFocused = true
-                    // Hide cursor when text field appears
-                    showCursor = false
-                }
+            }
+        }
+        .onChange(of: enteredName) { _, newValue in
+            // Hide cursor when user starts typing
+            if !newValue.isEmpty {
+                showCursor = false
+            } else if textFieldVisible {
+                // Show cursor again if field becomes empty
+                showCursor = true
             }
         }
     }
